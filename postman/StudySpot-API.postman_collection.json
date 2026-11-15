@@ -1,0 +1,1158 @@
+{
+  "info": {
+    "_postman_id": "a7b3c2d1-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+    "name": "StudySpot Cafe \u2013 Study Carrel Booking System",
+    "description": "Complete Postman collection for StudySpot Cafe Backend REST API, including Student CRUD, Carrel CRUD, Zone Search, 3-Table SQL JOIN, Return endpoint, and the Mandatory Double-Booking Prevention test cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "asha_booking_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "temp_booking_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "No Double Booking \u2013 Mandatory Tests",
+      "item": [
+        {
+          "name": "0. Reset Test Database",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Database reset successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql(\"success\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reset"
+              ]
+            },
+            "description": "Resets the database to clean initial state before running test scenarios."
+          },
+          "response": [
+            {
+              "name": "Reset OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Database reset to clean sample state successfully\",\n  \"status\": \"success\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "1. Book Carrel 4 to Asha",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Booking successfully created for Asha\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Booking created successfully\");",
+                  "    pm.expect(jsonData.booking.student_id).to.eql(1);",
+                  "    pm.expect(jsonData.booking.carrel_id).to.eql(4);",
+                  "    pm.expect(jsonData.booking.status).to.eql(\"Active\");",
+                  "    if (jsonData.booking && jsonData.booking.id) {",
+                  "        pm.collectionVariables.set(\"asha_booking_id\", jsonData.booking.id.toString());",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 1,\n  \"carrel_id\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "TEST 1: Books Carrel 4 to Asha (ID 1). Expected 201 Created."
+          },
+          "response": [
+            {
+              "name": "Test 1 Expected Success",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Booking created successfully\",\n  \"booking\": {\n    \"id\": 1,\n    \"student_id\": 1,\n    \"student_name\": \"Asha\",\n    \"carrel_id\": 4,\n    \"carrel_name\": \"Carrel 4\",\n    \"carrel_zone\": \"B\",\n    \"status\": \"Active\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. Attempt to book Carrel 4 to Ravi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test(\"Double booking rejected with exact error message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.eql(\"Carrel 4 is already booked\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 2,\n  \"carrel_id\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "TEST 2: Ravi attempts to book Carrel 4 while Asha is active. Expected 409 Conflict."
+          },
+          "response": [
+            {
+              "name": "Test 2 Expected Conflict",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Carrel 4 is already booked\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "3. Return Asha's booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Carrel returned successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Carrel returned successfully\");",
+                  "    pm.expect(jsonData.booking.status).to.eql(\"Returned\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{asha_booking_id}}/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{asha_booking_id}}",
+                "return"
+              ]
+            },
+            "description": "TEST 3 (Part 1): Asha returns Carrel 4. Expected 200 OK."
+          },
+          "response": [
+            {
+              "name": "Test 3a Returned",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Carrel returned successfully\",\n  \"booking\": {\n    \"id\": 1,\n    \"status\": \"Returned\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "4. Book Carrel 4 to Ravi again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Ravi successfully books Carrel 4 after return\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"Booking created successfully\");",
+                  "    pm.expect(jsonData.booking.student_id).to.eql(2);",
+                  "    pm.expect(jsonData.booking.carrel_id).to.eql(4);",
+                  "    pm.expect(jsonData.booking.status).to.eql(\"Active\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 2,\n  \"carrel_id\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "TEST 3 (Part 2): Ravi books Carrel 4 after return. Expected 201 Created."
+          },
+          "response": [
+            {
+              "name": "Test 3b Rebooked",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Booking created successfully\",\n  \"booking\": {\n    \"id\": 2,\n    \"student_id\": 2,\n    \"status\": \"Active\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Students",
+      "item": [
+        {
+          "name": "Get All Students",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students"
+              ]
+            },
+            "description": "Retrieves the list of all registered students."
+          },
+          "response": [
+            {
+              "name": "All Students",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\"id\": 1, \"name\": \"Asha\", \"email\": \"asha@studyspot.com\"}\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Student by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "1"
+              ]
+            },
+            "description": "Retrieves a student record by ID."
+          },
+          "response": [
+            {
+              "name": "Student Details",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"id\": 1, \"name\": \"Asha\", \"email\": \"asha@studyspot.com\"}"
+            }
+          ]
+        },
+        {
+          "name": "Create Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya\",\n  \"email\": \"priya@studyspot.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students"
+              ]
+            },
+            "description": "Adds a new student to the database."
+          },
+          "response": [
+            {
+              "name": "Student Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Student created successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Asha Sharma\",\n  \"email\": \"asha.sharma@studyspot.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/students/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "1"
+              ]
+            },
+            "description": "Updates student name or email."
+          },
+          "response": [
+            {
+              "name": "Student Updated",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Student updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "4"
+              ]
+            },
+            "description": "Deletes student Dev (ID 4)."
+          },
+          "response": [
+            {
+              "name": "Student Deleted",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Student 'Dev' deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Study Carrels",
+      "item": [
+        {
+          "name": "Get All Carrels",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrels"
+              ]
+            },
+            "description": "Retrieves all study carrels."
+          },
+          "response": [
+            {
+              "name": "All Carrels",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\"id\": 1, \"name\": \"Carrel 1\", \"zone\": \"A\", \"status\": \"Available\"}\n]"
+            }
+          ]
+        },
+        {
+          "name": "Search Carrels by Zone (GET ?zone=A)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrels?zone=A",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrels"
+              ],
+              "query": [
+                {
+                  "key": "zone",
+                  "value": "A"
+                }
+              ]
+            },
+            "description": "Filters carrels by zone parameter."
+          },
+          "response": [
+            {
+              "name": "Zone A Filtered",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\"id\": 1, \"name\": \"Carrel 1\", \"zone\": \"A\", \"status\": \"Available\"}\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Carrel by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrels/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrels",
+                "4"
+              ]
+            },
+            "description": "Retrieves Carrel 4."
+          },
+          "response": [
+            {
+              "name": "Carrel Details",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"id\": 4, \"name\": \"Carrel 4\", \"zone\": \"B\", \"status\": \"Available\"}"
+            }
+          ]
+        },
+        {
+          "name": "Create Carrel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Carrel 6\",\n  \"zone\": \"C\",\n  \"status\": \"Available\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/carrels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrels"
+              ]
+            },
+            "description": "Adds a new carrel."
+          },
+          "response": [
+            {
+              "name": "Carrel Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Study carrel created successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Carrel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Carrel 1 Deluxe\",\n  \"zone\": \"A\",\n  \"status\": \"Available\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/carrels/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrels",
+                "1"
+              ]
+            },
+            "description": "Updates carrel details."
+          },
+          "response": [
+            {
+              "name": "Carrel Updated",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Study carrel updated successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Carrel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carrels/5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carrels",
+                "5"
+              ]
+            },
+            "description": "Deletes Carrel 5."
+          },
+          "response": [
+            {
+              "name": "Carrel Deleted",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Carrel 'Carrel 5' deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Bookings",
+      "item": [
+        {
+          "name": "Create Active Booking for Testing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.booking && jsonData.booking.id) {",
+                  "    pm.collectionVariables.set(\"temp_booking_id\", jsonData.booking.id.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 3,\n  \"carrel_id\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Creates an active booking for Maya on Carrel 2."
+          },
+          "response": [
+            {
+              "name": "Booking Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Booking created successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Bookings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Retrieves all bookings."
+          },
+          "response": [
+            {
+              "name": "All Bookings",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\"id\": 1, \"status\": \"Active\"}\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Booking Details (SQL JOIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Response contains joined fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(Array.isArray(jsonData)).to.be.true;",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property(\"student_name\");",
+                  "        pm.expect(jsonData[0]).to.have.property(\"carrel_name\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/details",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "details"
+              ]
+            },
+            "description": "3-Table SQL JOIN."
+          },
+          "response": [
+            {
+              "name": "Joined Details",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\"booking_id\": 1, \"student_name\": \"Asha\", \"carrel_name\": \"Carrel 4\", \"carrel_zone\": \"B\"}\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Booking by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{temp_booking_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{temp_booking_id}}"
+              ]
+            },
+            "description": "Gets booking by ID."
+          },
+          "response": [
+            {
+              "name": "Booking By ID",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"id\": 1, \"status\": \"Active\"}"
+            }
+          ]
+        },
+        {
+          "name": "Return Carrel (PUT /api/bookings/:id/return)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{temp_booking_id}}/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{temp_booking_id}}",
+                "return"
+              ]
+            },
+            "description": "Marks booking as Returned."
+          },
+          "response": [
+            {
+              "name": "Returned OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"message\": \"Carrel returned successfully\"}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/{{temp_booking_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings",
+                "{{temp_booking_id}}"
+              ]
+            },
+            "description": "Deletes booking record."
+          },
+          "response": [
+            {
+              "name": "Delete OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"message\": \"Booking deleted successfully\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

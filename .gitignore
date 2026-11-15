@@ -1,0 +1,18 @@
+# Dependency directories
+node_modules/
+
+# Environment files
+.env
+
+# SQLite databases (generated at runtime)
+database/*.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
